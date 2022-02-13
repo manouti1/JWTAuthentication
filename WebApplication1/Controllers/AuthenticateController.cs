@@ -122,7 +122,7 @@
                 if (!result.Succeeded)
                     return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = LogMessage.USERCREATIONFAILURE });
 
-                return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+                return Ok(new Response { Status = "Success", Message = LogMessage.USERCREATEDSUCCESS });
             }
             catch (Exception ex)
             {
