@@ -16,6 +16,7 @@
     using Microsoft.Net.Http.Headers;
     using WebApplication1.Authentication;
     using WebApplication1.Constants;
+    using WebApplication1.Services;
 
     [Route("api/[controller]")]
     [ApiController]
@@ -23,11 +24,14 @@
     {
         readonly IConfiguration _configuration;
         readonly UserManager<ApplicationUser> userManager;
+        private readonly ITokenManager _tokenManager;
 
-        public AuthenticateController(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+        public AuthenticateController(UserManager<ApplicationUser> userManager, IConfiguration configuration, ITokenManager tokenManager)
         {
             this.userManager = userManager;
             _configuration = configuration;
+            _tokenManager = tokenManager;
+
         }
 
         [HttpPost]
@@ -128,6 +132,14 @@
             {
                 throw ex;
             }
+        }
+
+        [HttpPost("logoff")]
+        public async Task<IActionResult> CancelAccessToken()
+        {
+            await _tokenManager.DeactivateCurrentAsync();
+
+            return NoContent();
         }
     }
 }

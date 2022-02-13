@@ -71,3 +71,5 @@ G:\FoodApp\WebApplication1\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.Swagge
 G:\FoodApp\WebApplication1\bin\Debug\netcoreapp3.1\Swashbuckle.AspNetCore.SwaggerUI.dll
 G:\FoodApp\WebApplication1\obj\Debug\netcoreapp3.1\WebApplication1.MvcApplicationPartsAssemblyInfo.cs
 G:\FoodApp\WebApplication1\bin\Debug\netcoreapp3.1\WebApplication1.xml
+G:\FoodApp\WebApplication1\bin\Debug\netcoreapp3.1\Microsoft.Extensions.Caching.Redis.dll
+G:\FoodApp\WebApplication1\bin\Debug\netcoreapp3.1\StackExchange.Redis.StrongName.dll
