@@ -19,13 +19,11 @@
     public class AuthenticateController : ControllerBase
     {
         readonly IConfiguration _configuration;
-        readonly RoleManager<IdentityRole> roleManager;
         readonly UserManager<ApplicationUser> userManager;
 
-        public AuthenticateController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        public AuthenticateController(UserManager<ApplicationUser> userManager, IConfiguration configuration)
         {
             this.userManager = userManager;
-            this.roleManager = roleManager;
             _configuration = configuration;
         }
 
