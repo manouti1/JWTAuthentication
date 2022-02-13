@@ -13,5 +13,9 @@ JWTs can be signed using a secret (with the HMAC algorithm) or a public/private 
 This application has support for swagger, it is mainly composed of 3 endpoints:
 
 api/login
+
+
 api/register
+
+
 api/weatherforcast (just to test the authentication if it works as expected)
