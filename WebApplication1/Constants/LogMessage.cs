@@ -9,5 +9,6 @@ namespace WebApplication1.Constants
     {
         public const string USERCREATIONFAILURE= "User creation failed! Please check user details and try again.";
         public const string USERALREADYEXISTS = "User already exists!";
+        public const string USERCREATEDSUCCESS = "User successfully created";
     }
 }
