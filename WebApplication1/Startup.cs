@@ -1,5 +1,6 @@
 namespace WebApplication1
 {
+    using System;
     using System.Text;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Builder;
@@ -51,6 +52,8 @@ namespace WebApplication1
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
+                        ValidateLifetime = false,
+                        ValidateIssuerSigningKey = true,
                         ValidAudience = Configuration["JWT:ValidAudience"],
                         ValidIssuer = Configuration["JWT:ValidIssuer"],
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
@@ -67,6 +70,12 @@ namespace WebApplication1
                     Title = "Implement Swagger UI",
                     Description = "Endpoints description",
                 });
+            });
+
+            services.Configure<SecurityStampValidatorOptions>(options =>
+            {
+                // enables immediate logout, after updating the user's stat.
+                options.ValidationInterval = TimeSpan.Zero;
             });
         }
 

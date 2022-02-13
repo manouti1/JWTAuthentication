@@ -6,6 +6,7 @@
     using System.Security.Claims;
     using System.Text;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.AspNetCore.Mvc;
@@ -19,13 +20,11 @@
     public class AuthenticateController : ControllerBase
     {
         readonly IConfiguration _configuration;
-        readonly RoleManager<IdentityRole> roleManager;
         readonly UserManager<ApplicationUser> userManager;
 
-        public AuthenticateController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        public AuthenticateController(UserManager<ApplicationUser> userManager, IConfiguration configuration)
         {
             this.userManager = userManager;
-            this.roleManager = roleManager;
             _configuration = configuration;
         }
 
@@ -61,6 +60,39 @@
             }
         }
 
+        [Authorize]
+        [HttpPost]
+        [Route("validate-token")]
+        public bool ValidateToken([FromBody] AuthToken authToken)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+                tokenHandler.ValidateToken(authToken.token, new TokenValidationParameters
+                {
+                    IssuerSigningKey = authSigningKey,
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = false,
+                    // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                    ClockSkew = TimeSpan.Zero,
+                    ValidAudience = _configuration["JWT:ValidAudience"],
+                    ValidIssuer = _configuration["JWT:ValidIssuer"],
+                }, out SecurityToken validatedToken);
+
+                var jwtToken = (JwtSecurityToken)validatedToken;
+
+                return jwtToken != null;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+        }
+
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
@@ -69,7 +101,7 @@
             {
                 var userExists = await userManager.FindByNameAsync(model.Username);
                 if (userExists != null)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = LogMessage.USERALREADYEXISTS});
+                    return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = LogMessage.USERALREADYEXISTS });
 
                 var user = new ApplicationUser { Email = model.Email, SecurityStamp = Guid.NewGuid().ToString(), UserName = model.Username };
                 var result = await userManager.CreateAsync(user, model.Password);
