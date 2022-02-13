@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IdentityModel.Tokens.Jwt;
+    using System.Net.Http.Headers;
     using System.Security.Claims;
     using System.Text;
     using System.Threading.Tasks;
@@ -12,6 +13,7 @@
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
+    using Microsoft.Net.Http.Headers;
     using WebApplication1.Authentication;
     using WebApplication1.Constants;
 
@@ -60,35 +62,47 @@
             }
         }
 
-        [Authorize]
         [HttpPost]
         [Route("validate-token")]
-        public bool ValidateToken([FromBody] AuthToken authToken)
+        public bool ValidateToken()
         {
+            var isValid = false;
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-                tokenHandler.ValidateToken(authToken.token, new TokenValidationParameters
+                var authorization = Request.Headers[HeaderNames.Authorization];
+
+                if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
                 {
-                    IssuerSigningKey = authSigningKey,
-                    ValidateIssuerSigningKey = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = false,
-                    // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
-                    ClockSkew = TimeSpan.Zero,
-                    ValidAudience = _configuration["JWT:ValidAudience"],
-                    ValidIssuer = _configuration["JWT:ValidIssuer"],
-                }, out SecurityToken validatedToken);
+                    var scheme = headerValue.Scheme;
+                    var parameter = headerValue.Parameter;
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
+                    // scheme will be "Bearer"
+                    // parmameter will be the token itself.
+                    tokenHandler.ValidateToken(parameter, new TokenValidationParameters
+                    {
+                        IssuerSigningKey = authSigningKey,
+                        ValidateIssuerSigningKey = true,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = false,
+                        // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                        ClockSkew = TimeSpan.Zero,
+                        ValidAudience = _configuration["JWT:ValidAudience"],
+                        ValidIssuer = _configuration["JWT:ValidIssuer"],
+                    }, out SecurityToken validatedToken);
 
-                return jwtToken != null;
+                    var jwtToken = (JwtSecurityToken)validatedToken;
+                    isValid = true;
+                   
+                }
+                return isValid;
+
             }
             catch (Exception ex)
             {
-                return false;
+                return isValid;
             }
 
         }
