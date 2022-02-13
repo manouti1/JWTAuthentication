@@ -5,6 +5,7 @@ namespace WebApplication1
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ namespace WebApplication1
     using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
     using WebApplication1.Authentication;
+    using WebApplication1.Services;
 
     public class Startup
     {
@@ -29,13 +31,24 @@ namespace WebApplication1
             services.AddControllers();
             // For Entity Framework
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DBConnection")));
-
+            services.AddLogging();
             // For Identity
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+            //redis setup
+            services.AddTransient<TokenManagerMiddleware>();
+            services.AddTransient<ITokenManager, TokenManager>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddDistributedRedisCache(r => { r.Configuration = Configuration["redis:connectionString"]; });
+            services.AddOptions();
             // Adding Authentication
+            var jwtSection = Configuration.GetSection("JWT");
+            var jwtOptions = new JwtOptions();
+            jwtSection.Bind(jwtOptions);
+            services.Configure<JwtOptions>(jwtSection);
+
             services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -54,11 +67,12 @@ namespace WebApplication1
                         ValidateAudience = true,
                         ValidateLifetime = false,
                         ValidateIssuerSigningKey = true,
-                        ValidAudience = Configuration["JWT:ValidAudience"],
-                        ValidIssuer = Configuration["JWT:ValidIssuer"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
+                        ValidAudience = jwtOptions.ValidAudience,
+                        ValidIssuer = jwtOptions.ValidIssuer,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
                     };
                 });
+
 
             services.AddSwaggerGen();
 
@@ -96,6 +110,7 @@ namespace WebApplication1
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<TokenManagerMiddleware>();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
